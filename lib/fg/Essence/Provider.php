@@ -135,8 +135,8 @@ abstract class Provider {
 		$url = $this->_prepare( $url );
 		$Media = $this->_embed( $url, $options );
 
-		if ( empty( $Media->url )) {
-			$Media->url = $url;
+		if ( $Media && !$Media->get( 'url' )) {
+			$Media->set( 'url', $url );
 		}
 
 		return $Media;
@@ -165,7 +165,7 @@ abstract class Provider {
 	 *	@param string $url URL to fetch informations from.
 	 *	@param array $options Custom options to be interpreted by the provider.
 	 *	@return Media Embed informations.
-	 *	@throws \fg\Essence\Exception
+	 *	@throws fg\Essence\Exception
 	 */
 
 	abstract protected function _embed( $url, $options );

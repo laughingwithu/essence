@@ -1,9 +1,16 @@
 Essence
 =======
 
+[![Build status](https://secure.travis-ci.org/felixgirault/essence.png)](http://travis-ci.org/felixgirault/essence)
+[![Total downloads](https://poser.pugx.org/fg/essence/d/total.png)](https://packagist.org/packages/fg/essence)
+
 Essence is a simple PHP library to extract media informations from websites, like youtube videos, twitter statuses or blog articles.
 
-[![Build Status](https://secure.travis-ci.org/felixgirault/essence.png)](http://travis-ci.org/felixgirault/essence)
+* [Example](#example)
+* [What you get](#what-you-get)
+* [Configuration](#configuration)
+* [Advanced usage](#advanced-usage)
+* [Third-party libraries](#third-party-libraries)
 
 Example
 -------
@@ -48,7 +55,7 @@ What you get
 With Essence, you will mainly interact with Media objects.
 Media is a simple container for all the informations that are fetched from an URL.
 
-Here is the default properties it provides:
+Here are the default properties it provides:
 
 * type
 * version
@@ -76,11 +83,11 @@ Don't worry, all these "non-standard" properties can also be stored in a Media o
 ```php
 <?php
 
-if ( !$Media->hasProperty( 'foo' )) {
-	$Media->setProperty( 'foo', 'bar' );
+if ( !$Media->has( 'foo' )) {
+	$Media->set( 'foo', 'bar' );
 }
 
-$value = $Media->property( 'foo' );
+$value = $Media->get( 'foo' );
 
 // Or through the $properties array
 
@@ -116,12 +123,14 @@ $Essence = new fg\Essence\Essence(
 		'OEmbed/Youtube',
 		'OEmbed/Dailymotion',
 		'OpenGraph/Ted',
-		'YourCustomProvider'
+		'\YourCustomProvider'
 	)
 );
 
 ?>
 ```
+
+You can add custom providers by adding a FQCN (Fully-Qualified Class Name) to the list of providers.
 
 When given an array of providers, the constructor might throw an exception if a provider couldn't be found or loaded.
 If you want to make your code rock solid, you should better wrap that up in a try/catch statement:
@@ -130,7 +139,7 @@ If you want to make your code rock solid, you should better wrap that up in a tr
 <?php
 
 try {
-	$Essence = new fg\Essence\Essence( array( ... )); 
+	$Essence = new fg\Essence\Essence( array( ... ));
 } catch ( fg\Essence\Exception $Exception ) {
 	...
 }
@@ -248,8 +257,7 @@ $medias = $Essence->embedAll(
 ?>
 ```
 
-Error handling
---------------
+### Error handling
 
 By default, Essence does all the dirty stuff for you by catching all internal exceptions, so you just have to test if an Media object is valid.
 But, in case you want more informations about an error, Essence keeps exceptions warm, and lets you access all of them:
@@ -263,6 +271,34 @@ if ( !$Media ) {
 	$Exception = $Essence->lastError( );
 
 	echo 'That\'s why you should never trust a camel: ', $Exception->getMessage( );
+}
+
+?>
+```
+
+Third-party libraries
+---------------------
+
+* CakePHP plugin: https://github.com/felixgirault/cakephp-essence
+* Demo framework by Sean Steindl: https://github.com/laughingwithu/Essence_demo
+* Symfony bundle by Ka Yue Yeung: https://github.com/kayue/KayueEssenceBundle
+
+If you're interested in embedding videos, you should take a look at the [Multiplayer](https://github.com/felixgirault/multiplayer) lib.
+It allows you to build customizable embed codes painlessly:
+
+```php
+<?php
+
+$Multiplayer = new fg\Multiplayer\Multiplayer( );
+
+if ( $Media->type === 'video' ) {
+	echo $Multiplayer->html(
+		$Media->url,
+		array(
+			'autoPlay' => true,
+			'highlightColor' => 'BADA55'
+		)
+	);
 }
 
 ?>

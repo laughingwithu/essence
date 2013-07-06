@@ -85,25 +85,6 @@ class MediaTest extends \PHPUnit_Framework_TestCase {
 	 *
 	 */
 
-	public function testReindex( ) {
-
-		$Media = new Media(
-			$this->properties,
-			array( 'title' => 'title2' )
-		);
-
-		$this->assertEquals(
-			$this->properties['title'],
-			$Media->title2
-		);
-	}
-
-
-
-	/**
-	 *
-	 */
-
 	public function testMagicIsSet( ) {
 
 		$this->assertTrue( isset( $this->Media->custom ));
@@ -152,9 +133,9 @@ class MediaTest extends \PHPUnit_Framework_TestCase {
 	 *
 	 */
 
-	public function testHasProperty( ) {
+	public function testHas( ) {
 
-		$this->assertTrue( $this->Media->hasProperty( 'custom' ));
+		$this->assertTrue( $this->Media->has( 'custom' ));
 	}
 
 
@@ -163,9 +144,9 @@ class MediaTest extends \PHPUnit_Framework_TestCase {
 	 *
 	 */
 
-	public function testHasntProperty( ) {
+	public function testHasnt( ) {
 
-		$this->assertFalse( $this->Media->hasProperty( 'unknown' ));
+		$this->assertFalse( $this->Media->has( 'unknown' ));
 	}
 
 
@@ -174,25 +155,11 @@ class MediaTest extends \PHPUnit_Framework_TestCase {
 	 *
 	 */
 
-	public function testProperties( ) {
-
-		$this->assertEquals(
-			$this->properties,
-			$this->Media->properties( )
-		);
-	}
-
-
-
-	/**
-	 *
-	 */
-
-	public function testProperty( ) {
+	public function testGet( ) {
 
 		$this->assertEquals(
 			$this->properties['custom'],
-			$this->Media->property( 'custom' )
+			$this->Media->get( 'custom' )
 		);
 	}
 
@@ -202,9 +169,9 @@ class MediaTest extends \PHPUnit_Framework_TestCase {
 	 *
 	 */
 
-	public function testGetUnknownProperty( ) {
+	public function testGetUnknown( ) {
 
-		$this->assertNull( $this->Media->property( 'unknown' ));
+		$this->assertEmpty( $this->Media->get( 'unknown' ));
 	}
 
 
@@ -213,9 +180,9 @@ class MediaTest extends \PHPUnit_Framework_TestCase {
 	 *
 	 */
 
-	public function testSetProperty( ) {
+	public function testSet( ) {
 
-		$this->Media->setProperty( 'foo', 'bar' );
+		$this->Media->set( 'foo', 'bar' );
 		$this->assertEquals( 'bar', $this->Media->foo );
 	}
 }

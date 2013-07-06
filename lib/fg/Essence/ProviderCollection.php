@@ -7,6 +7,9 @@
 
 namespace fg\Essence;
 
+use fg\Essence\Utility\Package;
+use fg\Essence\Utility\Set;
+
 
 
 /**
@@ -63,28 +66,23 @@ class ProviderCollection {
 	 *
 	 *	@param array $providers An array of provider class names, relative to
 	 *		the 'Provider' folder.
-	 *	@throws \fg\Essence\Exception
+	 *	@throws fg\Essence\Exception
 	 */
 
 	public function load( array $providers = array( )) {
 
-		$excludeGenerics = false;
+		$excludeGenerics = empty( $providers );
 
-		if ( empty( $providers )) {
-			$providers = $this->_Package->classes( array( ), true );
-			$excludeGenerics = true;
+		if ( $excludeGenerics ) {
+			$providers = $this->_Package->classes( );
 		}
 
-		$this->_providers = array( );
+		$providers = Set::normalize( $providers, array( ));
 
 		foreach ( $providers as $name => $options ) {
-			if ( is_int( $name )) {
-				$name = $options;
-				$options = array( );
-			}
-
-			$className = '\\fg\\Essence\\Provider\\' . str_replace( '/', '\\', $name );
-			$Reflection = new \ReflectionClass( $className );
+			$Reflection = new \ReflectionClass(
+				$this->_fullyQualified( $name )
+			);
 
 			if ( !$Reflection->isAbstract( )) {
 				$Provider = $Reflection->newInstance( $options );
@@ -100,6 +98,23 @@ class ProviderCollection {
 				}
 			}
 		}
+	}
+
+
+
+	/**
+	 *	Returns the fully qualified class name (FQCN) for the given provider
+	 *	name. If the name happens to be a FQCN, it is returned as is.
+	 *
+	 *	@param string $name Provider name.
+	 *	@param string FQCN.
+	 */
+
+	protected function _fullyQualified( $name ) {
+
+		return ( $name[ 0 ] !== '\\' )
+			? '\\fg\\Essence\\Provider\\' . str_replace( '/', '\\', $name )
+			: $name;
 	}
 
 
@@ -128,7 +143,7 @@ class ProviderCollection {
 	 *	Finds providers of the given url.
 	 *
 	 *	@param string $url An url which may be embedded.
-	 *	@return array An array of \fg\Essence\Provider.
+	 *	@return array An array of fg\Essence\Provider.
 	 */
 
 	public function providers( $url ) {

@@ -5,14 +5,16 @@
  *	@license FreeBSD License (http://opensource.org/licenses/BSD-2-Clause)
  */
 
-namespace fg\Essence;
+namespace fg\Essence\Utility;
+
+use fg\Essence\Exception;
 
 
 
 /**
  *	An object registry.
  *
- *	@package fg.Essence
+ *	@package fg.Essence.Utility
  */
 
 class Registry {
@@ -46,7 +48,7 @@ class Registry {
 	 *
 	 *	@param string $name Object name.
 	 *	@return object The registered object.
-	 *	@throws \fg\Essence\Exception
+	 *	@throws fg\Essence\Exception
 	 */
 
 	public static function get( $name ) {

@@ -5,12 +5,13 @@
  *	@license FreeBSD License (http://opensource.org/licenses/BSD-2-Clause)
  */
 
-namespace fg\Essence;
+use fg\Essence\Utility\ClassLoader;
 
 require_once
 	dirname( __FILE__ )
 	. DIRECTORY_SEPARATOR . 'fg'
 	. DIRECTORY_SEPARATOR . 'Essence'
+	. DIRECTORY_SEPARATOR . 'Utility'
 	. DIRECTORY_SEPARATOR . 'ClassLoader.php';
 
 
