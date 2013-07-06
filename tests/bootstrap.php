@@ -5,7 +5,10 @@
  *	@license FreeBSD License (http://opensource.org/licenses/BSD-2-Clause)
  */
 
-namespace fg\Essence;
+use fg\Essence\Cache\Null;
+use fg\Essence\Http\FileGetContents;
+use fg\Essence\Utility\ClassLoader;
+use fg\Essence\Utility\Registry;
 
 require_once dirname( dirname( __FILE__ ))
 	. DIRECTORY_SEPARATOR . 'lib'
@@ -44,8 +47,8 @@ if ( !defined( 'ESSENCE_PACKAGE' )) {
  *	Autoload
  */
 
-$ClassLoader = new ClassLoader( ESSENCE_TEST );
-$ClassLoader->register( );
+$ResourcesClassLoader = new ClassLoader( ESSENCE_RESOURCES );
+$ResourcesClassLoader->register( );
 
 
 
@@ -53,5 +56,5 @@ $ClassLoader->register( );
  *	Test configuration.
  */
 
-Registry::register( 'cache', new Cache\Null( ));
-Registry::register( 'http', new Http\FileGetContents( ));
+Registry::register( 'cache', new Null( ));
+Registry::register( 'http', new FileGetContents( ));

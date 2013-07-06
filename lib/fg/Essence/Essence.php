@@ -7,6 +7,11 @@
 
 namespace fg\Essence;
 
+use fg\Essence\Cache\Volatile;
+use fg\Essence\Dom\DomDocument;
+use fg\Essence\Http\Curl;
+use fg\Essence\Utility\Registry;
+
 
 
 /**
@@ -20,7 +25,7 @@ class Essence {
 	/**
 	 *	A collection of providers to query.
 	 *
-	 *	@var \fg\Essence\ProviderCollection
+	 *	@var fg\Essence\ProviderCollection
 	 */
 
 	protected $_Collection = null;
@@ -30,7 +35,7 @@ class Essence {
 	/**
 	 *	The internal cache engine.
 	 *
-	 *	@var \fg\Essence\Cache
+	 *	@var fg\Essence\Cache
 	 */
 
 	protected $_Cache = null;
@@ -72,15 +77,15 @@ class Essence {
 	public function _checkEnvironment( ) {
 
 		if ( !Registry::has( 'cache' )) {
-			Registry::register( 'cache', new Cache\Volatile( ));
+			Registry::register( 'cache', new Volatile( ));
 		}
 
 		if ( !Registry::has( 'dom' )) {
-			Registry::register( 'dom', new Dom\DomDocument( ));
+			Registry::register( 'dom', new DomDocument( ));
 		}
 
 		if ( !Registry::has( 'http' )) {
-			Registry::register( 'http', new Http\Curl( ));
+			Registry::register( 'http', new Curl( ));
 		}
 	}
 
@@ -158,27 +163,19 @@ class Essence {
 
 	protected function _extractUrls( $html ) {
 
-		$attributes = Registry::get( 'dom' )->extractAttributes(
-			$html,
-			array(
-				'a' => 'href',
-				'embed' => 'src',
-				'iframe' => 'src'
-			)
+		$options = array(
+			'a' => 'href',
+			'embed' => 'src',
+			'iframe' => 'src'
 		);
 
+		$attributes = Registry::get( 'dom' )->extractAttributes( $html, $options );
 		$urls = array( );
 
-		foreach ( $attributes['a'] as $a ) {
-			$urls[ ] = $a['href'];
-		}
-
-		foreach ( $attributes['embed'] as $embed ) {
-			$urls[ ] = $embed['src'];
-		}
-
-		foreach ( $attributes['iframe'] as $iframe ) {
-			$urls[ ] = $iframe['src'];
+		foreach ( $options as $tagName => $attributeName ) {
+			foreach ( $attributes[ $tagName ] as $tag ) {
+				$urls[ ] = $tag[ $attributeName ];
+			}
 		}
 
 		return $urls;
@@ -289,39 +286,44 @@ class Essence {
 	 *
 	 *	@param string $text Text in which to replace URLs.
 	 *	@param string $template Replacement template.
+	 *	@param array $options Custom options to be interpreted by a provider.
 	 *	@return string Text with replaced URLs.
 	 */
 
-	public function replace( $text, $template = '' ) {
+	public function replace( $text, $template = '', array $options = array( )) {
 
 		$Essence = $this;
 
 		return preg_replace_callback(
-			// http://daringfireball.net/2009/11/liberal_regex_for_matching_urls
-			'#(\s)(([\w-]+://?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))#i',
-			function ( $matches ) use ( &$Essence, $template ) {
-				$Media = $Essence->embed( $matches[ 2 ]);
+			// http://daringfireball.net/2010/07/improved_regex_for_matching_urls
+			'#(?<lead>.)?(?<url>(?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'"\.,<>?«»“”‘’]))#i',
+			function ( $matches ) use ( &$Essence, $template, $options ) {
+
+				// if the character preceding the URL is a quote, then it is
+				// probably inside a tag attribute, and we don't want to
+				// replace those ones.
+				if ( $matches['lead'] === '"' ) {
+					return $matches[ 0 ];
+				}
+
+				$Media = $Essence->embed( $matches['url'], $options );
 				$replacement = '';
 
 				if ( $Media !== null ) {
 					if ( empty( $template )) {
-						$replacement = $Media->property( 'html' );
+						$replacement = $Media->get( 'html' );
 					} else {
-						$replacements = array( );
-
-						foreach ( $Media as $property => $value ) {
-							$replacements["%$property%"] = $value;
-						}
-
-						$replacement = str_replace(
-							array_keys( $replacements ),
-							array_values( $replacements ),
+						$replacement = preg_replace_callback(
+							'#%(?<property>[\s\S]+?)%#',
+							function( $m ) use ( &$Media ) {
+								return $Media->get( $m['property']);
+							},
 							$template
 						);
 					}
 				}
 
-				return $matches[1] . $replacement;
+				return $matches['lead'] . $replacement;
 			},
 			$text
 		);
