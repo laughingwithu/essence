@@ -10,6 +10,7 @@ namespace Essence;
 use Essence\Configurable;
 use Essence\Exception;
 use Essence\Media;
+use Essence\Media\Preparator;
 use Essence\Log\Logger;
 
 
@@ -17,7 +18,7 @@ use Essence\Log\Logger;
 /**
  *	Base class for a Provider.
  *
- *	@package fg.Essence
+ *	@package Essence
  */
 
 abstract class Provider {
@@ -37,6 +38,16 @@ abstract class Provider {
 
 
 	/**
+	 *	Media preparator.
+	 *
+	 *	@var Essence\Media\Preparator
+	 */
+
+	protected $_Preparator = null;
+
+
+
+	/**
 	 *	Configuration options.
 	 *
 	 *	### Options
@@ -46,9 +57,9 @@ abstract class Provider {
 	 *	@var array
 	 */
 
-	protected $_properties = array(
-		'prepare' => 'trim'
-	);
+	protected $_properties = [
+		'prepare' => 'self::prepareUrl'
+	];
 
 
 
@@ -56,11 +67,13 @@ abstract class Provider {
 	 *	Constructor.
 	 *
 	 *	@param Essence\Log\Logger $Logger Logger.
+	 *	@param Essence\Log\Preparator $Preparator Preparator.
 	 */
 
-	public function __construct( Logger $Logger ) {
+	public function __construct( Logger $Logger, Preparator $Preparator = null ) {
 
 		$this->_Logger = $Logger;
+		$this->_Preparator = $Preparator;
 	}
 
 
@@ -74,26 +87,27 @@ abstract class Provider {
 	 *		fetched.
 	 */
 
-	public final function embed( $url, array $options = array( )) {
+	public final function embed( $url, array $options = [ ]) {
+
+		$Media = null;
 
 		if ( is_callable( $this->prepare )) {
-			$url = call_user_func( $this->prepare, $url );
+			$url = call_user_func( $this->prepare, $url, $options );
 		}
 
 		try {
 			$Media = $this->_embed( $url, $options );
 			$Media->setDefault( 'url', $url );
-			$Media->complete( );
+
+			if ( $this->_Preparator ) {
+				$this->_Preparator->complete( $Media, $options );
+			}
 		} catch ( Exception $Exception ) {
 			$this->_Logger->log(
 				Logger::notice,
 				"Unable to embed $url",
-				array(
-					'exception' => $Exception
-				)
+				[ 'exception' => $Exception ]
 			);
-
-			$Media = null;
 		}
 
 		return $Media;
@@ -110,6 +124,20 @@ abstract class Provider {
 	 *	@throws Essence\Exception
 	 */
 
-	abstract protected function _embed( $url, $options );
+	abstract protected function _embed( $url, array $options );
 
+
+
+	/**
+	 *	Trims and returns the given string.
+	 *
+	 *	@param string $url URL.
+	 *	@param array $options Embed options.
+	 *	@return string Trimmed URL.
+	 */
+
+	public static function prepareUrl( $url, array $options = [ ]) {
+
+		return trim( $url );
+	}
 }

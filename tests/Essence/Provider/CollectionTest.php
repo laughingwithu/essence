@@ -25,7 +25,7 @@ class ProviderImplementation extends Provider {
 	 *
 	 */
 
-	protected function _embed( $url, $options ) { }
+	protected function _embed( $url, array $options ) { }
 
 }
 
@@ -65,20 +65,18 @@ class CollectionTest extends PHPUnit_Framework_TestCase {
 		$Container->set( 'OEmbed', $this->Provider );
 
 		$this->Collection = new Collection( $Container );
-		$this->Collection->setProperties(
-			array(
-				'Foo' => array(
-					'class' => 'OEmbed',
-					'filter' => '#^foo$#'
-				),
-				'Bar' => array(
-					'class' => 'OpenGraph',
-					'filter' => function ( $url ) {
-						return ( $url === 'bar' );
-					}
-				)
-			)
-		);
+		$this->Collection->setProperties([
+			'Foo' => [
+				'class' => 'OEmbed',
+				'filter' => '#^foo$#'
+			],
+			'Bar' => [
+				'class' => 'OpenGraph',
+				'filter' => function ( $url ) {
+					return ( $url === 'bar' );
+				}
+			]
+		]);
 	}
 
 
@@ -102,12 +100,9 @@ class CollectionTest extends PHPUnit_Framework_TestCase {
 
 	public function testProviders( ) {
 
-		$providers = $this->Collection->providers( 'foo' );
-
-		if ( empty( $providers )) {
-			$this->fail( 'There should be one provider.' );
-		} else {
-			$this->assertEquals( $this->Provider, array_shift( $providers ));
-		}
+		$this->assertEquals(
+			[ $this->Provider ],
+			$this->Collection->providers( 'foo' )
+		);
 	}
 }

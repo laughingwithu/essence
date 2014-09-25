@@ -18,7 +18,7 @@ use DomNode;
 /**
  *	Handles HTML related operations through DomDocument.
  *
- *	@package fg.Essence.Dom.Parser
+ *	@package Essence.Dom.Parser
  */
 
 class Native implements Parser {
@@ -30,13 +30,13 @@ class Native implements Parser {
 	public function extractAttributes( $html, array $options ) {
 
 		$Document = $this->_document( $html );
-		$options = Hash::normalize( $options, array( ));
-		$data = array( );
+		$options = Hash::normalize( $options, [ ]);
+		$data = [ ];
 
 		foreach ( $options as $name => $required ) {
 			$tags = $Document->getElementsByTagName( $name );
 			$required = Hash::normalize(( array )$required, '' );
-			$data[ $name ] = array( );
+			$data[ $name ] = [ ];
 
 			foreach ( $tags as $Tag ) {
 				if ( $Tag->hasAttributes( )) {
@@ -67,6 +67,7 @@ class Native implements Parser {
 	protected function _document( $html ) {
 
 		$reporting = error_reporting( 0 );
+		$html = $this->fixCharset( $html );
 		$Document = DomDocument::loadHTML( $html );
 		error_reporting( $reporting );
 
@@ -75,6 +76,37 @@ class Native implements Parser {
 		}
 
 		return $Document;
+	}
+
+
+
+	/**
+	 *	If necessary, fixes the given HTML's charset to work with the current
+	 *	version of Libxml (used by DomDocument). Older versions of Libxml
+	 *	recognize only
+	 *
+	 *      <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	 *
+	 *  from HTML4, and not the new HTML5 form:
+	 *
+	 *      <meta charset="utf-8">
+	 *
+	 *  with the result that parsed strings can have funny characters.
+	 *
+	 *	@param string $html HTML source.
+	 *	@return string the fixed HTML
+	 *	@see "HTML5, character encodings and DOMDocument loadHTML and loadHTMLFile"
+	 *	     http://www.glenscott.co.uk/blog/html5-character-encodings-and-domdocument-loadhtml-and-loadhtmlfile/
+	 */
+
+	protected function fixCharset( $html ) {
+		// The fix is from https://github.com/glenscott/dom-document-charset/blob/master/DOMDocumentCharset.php
+		if ( LIBXML_VERSION < 20800 && stripos($html, 'meta charset') !== false ) {
+			$html = preg_replace( '/<meta charset=["\']?([^"\']+)"/i',
+					              '<meta http-equiv="Content-Type" content="text/html; charset=$1"',
+					              $html );
+		}
+		return $html;
 	}
 
 
@@ -89,7 +121,7 @@ class Native implements Parser {
 
 	protected function _extractAttributesFromTag( DOMNode $Tag, array $required ) {
 
-		$attributes = array( );
+		$attributes = [ ];
 
 		foreach ( $Tag->attributes as $name => $Attribute ) {
 			if ( !empty( $required )) {
@@ -97,7 +129,7 @@ class Native implements Parser {
 					$pattern = $required[ $name ];
 
 					if ( $pattern && !preg_match( $pattern, $Attribute->value )) {
-						return array( );
+						return [ ];
 					}
 				} else {
 					continue;
@@ -111,6 +143,6 @@ class Native implements Parser {
 
 		return empty( $diff )
 			? $attributes
-			: array( );
+			: [ ];
 	}
 }

@@ -12,7 +12,7 @@ namespace Essence\Utility;
 /**
  *	A simple PSR-0 compliant class loader.
  *
- *	@package fg.Essence.Utility
+ *	@package Essence.Utility
  */
 
 class Autoload {
@@ -28,6 +28,9 @@ class Autoload {
 		$basePath = rtrim( $basePath, DIRECTORY_SEPARATOR );
 
 		spl_autoload_register( function( $className ) use ( $basePath ) {
+			if (strpos($className, 'Essence\\') === false) {
+				return;
+			}
 			$path = $basePath
 				. DIRECTORY_SEPARATOR
 				. str_replace( '\\', DIRECTORY_SEPARATOR, $className )

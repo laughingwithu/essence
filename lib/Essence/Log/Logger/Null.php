@@ -14,7 +14,7 @@ use Essence\Log\Logger;
 /**
  *	Does absolutely nothing.
  *
- *	@package fg.Essence.Log.Logger
+ *	@package Essence.Log.Logger
  */
 
 class Null implements Logger {
@@ -23,6 +23,6 @@ class Null implements Logger {
 	 *	{@inheritDoc}
 	 */
 
-	public function log( $level, $message, array $context = array( )) { }
+	public function log( $level, $message, array $context = [ ]) { }
 
 }

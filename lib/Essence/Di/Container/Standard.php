@@ -12,17 +12,23 @@ use Essence\Di\Container;
 use Essence\Cache\Engine\Volatile as VolatileCacheEngine;
 use Essence\Dom\Parser\Native as NativeDomParser;
 use Essence\Http\Client\Curl as CurlHttpClient;
+use Essence\Http\Client\Native as NativeHttpClient;
 use Essence\Log\Logger\Null as NullLogger;
 use Essence\Provider\Collection;
 use Essence\Provider\OEmbed;
+use Essence\Provider\OEmbed\Vimeo;
+use Essence\Provider\OEmbed\Youtube;
 use Essence\Provider\OpenGraph;
-
+use Essence\Media\Preparator;
+use Essence\Media\Preparator\Bandcamp as BandcampPreparator;
+use Essence\Media\Preparator\Vine as VinePreparator;
+use Essence\Media\Preparator\Youtube as YoutubePreparator;
 
 
 /**
  *	Contains the default injection properties.
  *
- *	@package fg.Essence.Di.Container
+ *	@package Essence.Di.Container
  */
 
 class Standard extends Container {
@@ -31,11 +37,11 @@ class Standard extends Container {
 	 *	Sets the default properties.
 	 */
 
-	public function __construct( ) {
+	public function __construct( array $properties = [ ]) {
 
-		$this->_properties = array(
+		$this->_properties = $properties + [
 
-			// providers are loaded from the default config file
+			// Providers are loaded from the default config file
 			'providers' => ESSENCE_DEFAULT_PROVIDERS,
 
 			// A volatile cache engine is shared across the application
@@ -43,9 +49,18 @@ class Standard extends Container {
 				return new VolatileCacheEngine( );
 			}),
 
+			// User agent
+			'HttpUserAgent' => 'Essence',
+
 			// A cURL HTTP client is shared across the application
-			'Http' => Container::unique( function( ) {
-				return new CurlHttpClient( );
+			// If cURL isn't available, a native client is used
+			'Http' => Container::unique( function( $C ) {
+				$Http = function_exists( 'curl_init' )
+					? new CurlHttpClient( )
+					: new NativeHttpClient( );
+
+				$Http->setUserAgent( $C->get( 'HttpUserAgent' ));
+				return $Http;
 			}),
 
 			// A native DOM parser is shared across the application
@@ -58,13 +73,46 @@ class Standard extends Container {
 				return new NullLogger( );
 			}),
 
+			//
+			'Preparator' => Container::unique( function( ) {
+				return new Preparator( );
+			}),
+
 			// The OEmbed provider uses the shared HTTP client, DOM parser
 			// and logger.
 			'OEmbed' => function( $C ) {
 				return new OEmbed(
 					$C->get( 'Http' ),
 					$C->get( 'Dom' ),
-					$C->get( 'Log' )
+					$C->get( 'Log' ),
+					$C->get( 'Preparator' )
+				);
+			},
+
+			// The Vimeo provider uses the shared HTTP client, DOM parser
+			// and logger.
+			'Vimeo' => function( $C ) {
+				return new Vimeo(
+					$C->get( 'Http' ),
+					$C->get( 'Dom' ),
+					$C->get( 'Log' ),
+					$C->get( 'Preparator' )
+				);
+			},
+
+			//
+			'YoutubePreparator' => Container::unique( function( ) {
+				return new YoutubePreparator( );
+			}),
+
+			// The Youtube provider uses the shared HTTP client, DOM parser
+			// and logger.
+			'Youtube' => function( $C ) {
+				return new Youtube(
+					$C->get( 'Http' ),
+					$C->get( 'Dom' ),
+					$C->get( 'Log' ),
+					$C->get( 'Preparator' )
 				);
 			},
 
@@ -74,7 +122,40 @@ class Standard extends Container {
 				return new OpenGraph(
 					$C->get( 'Http' ),
 					$C->get( 'Dom' ),
-					$C->get( 'Log' )
+					$C->get( 'Log' ),
+					$C->get( 'Preparator' )
+				);
+			},
+
+			//
+			'BandcampPreparator' => Container::unique( function( ) {
+				return new BandcampPreparator( );
+			}),
+
+			// The Bandcamp provider uses the shared HTTP client, DOM parser
+			// and logger.
+			'Bandcamp' => function( $C ) {
+				return new OpenGraph(
+					$C->get( 'Http' ),
+					$C->get( 'Dom' ),
+					$C->get( 'Log' ),
+					$C->get( 'BandcampPreparator' )
+				);
+			},
+
+			//
+			'VinePreparator' => Container::unique( function( ) {
+				return new VinePreparator( );
+			}),
+
+			// The Vine provider uses the shared HTTP client, DOM parser
+			// and logger.
+			'Vine' => function( $C ) {
+				return new OpenGraph(
+					$C->get( 'Http' ),
+					$C->get( 'Dom' ),
+					$C->get( 'Log' ),
+					$C->get( 'VinePreparator' )
 				);
 			},
 
@@ -97,6 +178,6 @@ class Standard extends Container {
 					$C->get( 'Log' )
 				);
 			}
-		);
+		];
 	}
 }

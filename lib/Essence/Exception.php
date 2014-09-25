@@ -14,10 +14,28 @@ use Exception as NativeException;
 /**
  *	The base exception class of the Essence API.
  *
- *	@package fg.Essence
+ *	@package Essence
  */
 
 class Exception extends NativeException {
+
+	/**
+	 *	Wraps a native PHP exception.
+	 *
+	 *	@param NativeException Native exception.
+	 *	@return Exception Essence exception.
+	 */
+
+	public static function wrap( NativeException $Exception ) {
+
+		return new Exception(
+			$Exception->getMessage( ),
+			$Exception->getCode( ),
+			$Exception
+		);
+	}
+
+
 
 	/**
 	 *	An alias to fit the Essence coding style.

@@ -14,7 +14,7 @@ use Essence\Exception as EssenceException;
 /**
  *	An HTTP related exception.
  *
- *	@package fg.Essence.Http
+ *	@package Essence.Http
  */
 
 class Exception extends EssenceException {
@@ -37,7 +37,7 @@ class Exception extends EssenceException {
 	 *	@var array
 	 */
 
-	protected $_messages = array(
+	protected $_messages = [
 
 		// Client errors
 		400 => 'Bad request',
@@ -66,7 +66,7 @@ class Exception extends EssenceException {
 		503 => 'Service unavailable',
 		504 => 'Gateway timeout',
 		505 => 'HTTP version not supported'
-	);
+	];
 
 
 

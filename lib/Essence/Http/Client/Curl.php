@@ -15,15 +15,15 @@ use Essence\Http\Exception;
 /**
  *	Handles HTTP related operations through cURL.
  *
- *	@package fg.Essence.Http.Client
+ *	@package Essence.Http.Client
  */
 
-class Curl implements Client {
+class Curl extends Client {
 
 	/**
 	 *	CURL handle.
 	 *
-	 *	@var Dunno LOL
+	 *	@var resource
 	 */
 
 	protected $_curl = null;
@@ -36,11 +36,11 @@ class Curl implements Client {
 	 *	@var array
 	 */
 
-	protected $_defaults = array(
+	protected $_defaults = [
 		CURLOPT_HEADER => false,
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_FOLLOWLOCATION => true
-	);
+	];
 
 
 
@@ -50,7 +50,7 @@ class Curl implements Client {
 	 *	@param array cURL options.
 	 */
 
-	public function __construct( array $options = array( )) {
+	public function __construct( array $options = [ ]) {
 
 		$this->_curl = curl_init( );
 
@@ -80,6 +80,7 @@ class Curl implements Client {
 	public function get( $url ) {
 
 		curl_setopt( $this->_curl, CURLOPT_URL, $url );
+		curl_setopt( $this->_curl, CURLOPT_USERAGENT, $this->_userAgent );
 
 		$contents = curl_exec( $this->_curl );
 

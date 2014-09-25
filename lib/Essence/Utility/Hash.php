@@ -12,7 +12,7 @@ namespace Essence\Utility;
 /**
  *	An utility class to manipulate data sets.
  *
- *	@package fg.Essence.Utility
+ *	@package Essence.Utility
  */
 
 class Hash {
@@ -52,7 +52,7 @@ class Hash {
 
 	public static function normalize( array $data, $default ) {
 
-		$normalized = array( );
+		$normalized = [ ];
 
 		foreach ( $data as $key => $value ) {
 			if ( is_numeric( $key )) {

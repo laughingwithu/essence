@@ -12,10 +12,20 @@ namespace Essence\Http;
 /**
  *	Handles HTTP related operations.
  *
- *	@package fg.Essence.Http
+ *	@package Essence.Http
  */
 
-interface Client {
+abstract class Client {
+
+	/**
+	 *	User agent.
+	 *
+	 *	@var string
+	 */
+
+	protected $_userAgent = '';
+
+
 
 	/**
 	 *	Retrieves contents from the given URL.
@@ -25,6 +35,17 @@ interface Client {
 	 *	@throws Essence\Http\Exception
 	 */
 
-	public function get( $url );
+	abstract public function get( $url );
 
+
+
+	/**
+	 *	Sets the user agent for HTTP requests.
+	 *
+	 *	@param string $userAgent User agent.
+	 */
+	public function setUserAgent( $userAgent ) {
+
+		$this->_userAgent = $userAgent;
+	}
 }

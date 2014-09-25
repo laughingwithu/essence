@@ -15,13 +15,14 @@ use Essence\Dom\Parser as DomParser;
 use Essence\Http\Client as HttpClient;
 use Essence\Log\Logger;
 use Essence\Provider\Collection;
+use Essence\Exception;
 
 
 
 /**
  *	Gathers embed informations from URLs.
  *
- *	@package fg.Essence
+ *	@package Essence
  */
 
 class Essence {
@@ -81,18 +82,19 @@ class Essence {
 	 *	@var array
 	 */
 
-	protected $_properties = array(
+	protected $_properties = [
 		// http://daringfireball.net/2010/07/improved_regex_for_matching_urls
 		'urlPattern' =>
 			'#
-				(?<!=["\'])
 				(?<url>
-					(?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)
+					(?<!=["\'])
+					(?:https?:)//
+					(?:www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)?
 					(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+
 					(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'"\.,<>?«»“”‘’])
 				)
 			#ix'
-	);
+	];
 
 
 
@@ -129,11 +131,9 @@ class Essence {
 	 *	@return Essence\Essence Essence instance.
 	 */
 
-	public static function instance( array $configuration = array( )) {
+	public static function instance( array $configuration = [ ]) {
 
-		$Container = new StandardContainer( );
-		$Container->configure( $configuration );
-
+		$Container = new StandardContainer( $configuration );
 		return $Container->get( 'Essence' );
 	}
 
@@ -170,17 +170,15 @@ class Essence {
 				$this->_Logger->log(
 					Logger::notice,
 					"Unable to fetch $source",
-					array(
-						'exception' => $Exception
-					)
+					[ 'exception' => $Exception ]
 				);
 
-				return array( );
+				return [ ];
 			}
 		}
 
 		$urls = $this->_extractUrls( $source );
-		$embeddable = array( );
+		$embeddable = [ ];
 
 		foreach ( $urls as $url ) {
 			if ( $this->_Collection->hasProvider( $url )) {
@@ -202,11 +200,11 @@ class Essence {
 
 	protected function _extractUrls( $html ) {
 
-		$options = array(
+		$options = [
 			'a' => 'href',
 			'embed' => 'src',
 			'iframe' => 'src'
-		);
+		];
 
 		try {
 			$attributes = $this->_Dom->extractAttributes( $html, $options );
@@ -214,16 +212,13 @@ class Essence {
 			$this->_Logger->log(
 				Logger::notice,
 				'Error parsing HTML source',
-				array(
-					'exception' => $Exception,
-					'html' => $html
-				)
+				[ 'exception' => $Exception, 'html' => $html ]
 			);
 
-			return array( );
+			return [ ];
 		}
 
-		$urls = array( );
+		$urls = [ ];
 
 		foreach ( $options as $tagName => $attributeName ) {
 			foreach ( $attributes[ $tagName ] as $tag ) {
@@ -247,10 +242,10 @@ class Essence {
 	 *
 	 *	@param string $url URL to fetch informations from.
 	 *	@param array $options Custom options to be interpreted by a provider.
-	 *	@return Media Embed informations.
+	 *	@return Essence\Media Embed informations.
 	 */
 
-	public function embed( $url, array $options = array( )) {
+	public function embed( $url, array $options = [ ]) {
 
 		return $this->_cached( '_embed', $url, $options );
 	}
@@ -263,7 +258,7 @@ class Essence {
 	 *	@see embed( )
 	 *	@param string $url URL to fetch informations from.
 	 *	@param array $options Custom options to be interpreted by a provider.
-	 *	@return Media Embed informations.
+	 *	@return Essence\Media Embed informations.
 	 */
 
 	protected function _embed( $url, array $options ) {
@@ -290,9 +285,9 @@ class Essence {
 	 *	@return array An array of embed informations, indexed by URL.
 	 */
 
-	public function embedAll( array $urls, array $options = array( )) {
+	public function embedAll( array $urls, array $options = [ ]) {
 
-		$medias = array( );
+		$medias = [ ];
 
 		foreach ( $urls as $url ) {
 			$medias[ $url ] = $this->embed( $url, $options );
@@ -318,8 +313,8 @@ class Essence {
 	 *
 	 *	This behavior should make it easy to integrate third party templating
 	 *	engines.
-	 *	The pattern to match urls can be configured the 'urlPattern' configuration
-	 *	option.
+	 *	The pattern to match urls can be configured using the 'urlPattern'
+	 *	configuration option.
 	 *
 	 *	Thanks to Stefano Zoffoli (https://github.com/stefanozoffoli) for his
 	 *	idea (https://github.com/felixgirault/essence/issues/4).
@@ -330,20 +325,18 @@ class Essence {
 	 *	@return string Text with replaced URLs.
 	 */
 
-	public function replace( $text, $callback = null, array $options = array( )) {
+	public function replace( $text, $callback = null, array $options = [ ]) {
 
 		return preg_replace_callback(
 			$this->urlPattern,
 			function ( $matches ) use ( $callback, $options ) {
-				$Media = $this->embed( $matches['url'], $options );
-
-				if ( $Media === null ) {
-					return $matches['url'];
+				if ( $Media = $this->embed( $matches['url'], $options )) {
+					return is_callable( $callback )
+						? call_user_func( $callback, $Media )
+						: $Media->get( 'html' );
 				}
 
-				return is_callable( $callback )
-					? call_user_func( $callback, $Media )
-					: $Media->get( 'html' );
+				return $matches['url'];
 			},
 			$text
 		);

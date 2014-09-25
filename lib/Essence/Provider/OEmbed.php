@@ -9,6 +9,7 @@ namespace Essence\Provider;
 
 use Essence\Exception;
 use Essence\Media;
+use Essence\Media\Preparator;
 use Essence\Provider;
 use Essence\Dom\Parser as DomParser;
 use Essence\Http\Client as HttpClient;
@@ -23,7 +24,7 @@ use Essence\Utility\Xml;
  *	Base class for an OEmbed provider.
  *	This kind of provider extracts embed informations through the OEmbed protocol.
  *
- *	@package fg.Essence.Provider
+ *	@package Essence.Provider
  */
 
 class OEmbed extends Provider {
@@ -75,11 +76,11 @@ class OEmbed extends Provider {
 	 *	- 'format' string The expected response format.
 	 */
 
-	protected $_properties = array(
-		'prepare' => 'self::prepareUrl',
+	protected $_properties = [
+		'prepare' => 'static::prepareUrl',
 		'endpoint' => '',
 		'format' => self::json
-	);
+	];
 
 
 
@@ -89,17 +90,19 @@ class OEmbed extends Provider {
 	 *	@param Essence\Http\Client $Http HTTP client.
 	 *	@param Essence\Dom\Parser $Dom DOM parser.
 	 *	@param Essence\Log\Logger $Log Logger.
+	 *	@param Essence\Log\Preparator $Preparator Preparator.
 	 */
 
 	public function __construct(
 		HttpClient $Http,
 		DomParser $Dom,
-		Logger $Log = null
+		Logger $Log,
+		Preparator $Preparator = null
 	) {
 		$this->_Http = $Http;
 		$this->_Dom = $Dom;
 
-		parent::__construct( $Log );
+		parent::__construct( $Log, $Preparator );
 	}
 
 
@@ -111,7 +114,7 @@ class OEmbed extends Provider {
 	 *	@return string Prepared url.
 	 */
 
-	public static function prepareUrl( $url ) {
+	public static function prepareUrl( $url, array $options = [ ]) {
 
 		$url = trim( $url );
 
@@ -154,7 +157,7 @@ class OEmbed extends Provider {
 	 *	@throws Essence\Exception If the parsed page doesn't provide any endpoint.
 	 */
 
-	protected function _embed( $url, $options ) {
+	protected function _embed( $url, array $options ) {
 
 		if ( $this->endpoint ) {
 			$endpoint = sprintf( $this->endpoint, urlencode( $url ));
@@ -185,16 +188,13 @@ class OEmbed extends Provider {
 
 	protected function _extractEndpoint( $url, &$endpoint, &$format ) {
 
-		$attributes = $this->_Dom->extractAttributes(
-			$this->_Http->get( $url ),
-			array(
-				'link' => array(
-					'rel' => '#alternate#i',
-					'type',
-					'href'
-				)
-			)
-		);
+		$attributes = $this->_Dom->extractAttributes( $this->_Http->get( $url ), [
+			'link' => [
+				'rel' => '#alternate#i',
+				'type',
+				'href'
+			]
+		]);
 
 		foreach ( $attributes['link'] as $link ) {
 			if ( preg_match( '#(?<format>json|xml)#i', $link['type'], $matches )) {
@@ -218,13 +218,10 @@ class OEmbed extends Provider {
 
 	protected function _completeEndpoint( &$endpoint, $options ) {
 
-		$params = array_intersect_key(
-			$options,
-			array(
-				'maxwidth' => '',
-				'maxheight' => ''
-			)
-		);
+		$params = array_intersect_key( $options, [
+			'maxwidth' => '',
+			'maxheight' => ''
+		]);
 
 		if ( $params ) {
 			$endpoint .= ( strrpos( $endpoint, '?' ) === false ) ? '?' : '&';
@@ -260,19 +257,16 @@ class OEmbed extends Provider {
 		}
 
 		return new Media(
-			Hash::reindex(
-				$data,
-				array(
-					'author_name' => 'authorName',
-					'author_url' => 'authorUrl',
-					'provider_name' => 'providerName',
-					'provider_url' => 'providerUrl',
-					'cache_age' => 'cacheAge',
-					'thumbnail_url' => 'thumbnailUrl',
-					'thumbnail_width' => 'thumbnailWidth',
-					'thumbnail_height' => 'thumbnailHeight'
-				)
-			)
+			Hash::reindex( $data, [
+				'author_name' => 'authorName',
+				'author_url' => 'authorUrl',
+				'provider_name' => 'providerName',
+				'provider_url' => 'providerUrl',
+				'cache_age' => 'cacheAge',
+				'thumbnail_url' => 'thumbnailUrl',
+				'thumbnail_width' => 'thumbnailWidth',
+				'thumbnail_height' => 'thumbnailHeight'
+			])
 		);
 	}
 }
